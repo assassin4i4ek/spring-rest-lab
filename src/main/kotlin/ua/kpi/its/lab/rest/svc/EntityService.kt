@@ -1,48 +1,48 @@
 package ua.kpi.its.lab.rest.svc
 
-import ua.kpi.its.lab.rest.entity.Vehicle
+import ua.kpi.its.lab.rest.dto.VehicleRequest
+import ua.kpi.its.lab.rest.dto.VehicleResponse
 
 interface VehicleService {
     /**
-     * Creates a new Vehicle record.
-     *
-     * @param vehicle: The Vehicle instance to be inserted
-     * @return: The recently created Vehicle instance
-     */
-    fun create(vehicle: Vehicle): Vehicle
+    * Creates a new Vehicle record.
+    *
+    * @param vehicle: The VehicleRequest instance to be inserted
+    * @return: The recently created VehicleResponse instance
+    */
+    fun create(vehicle: VehicleRequest): VehicleResponse
+
     /**
-     * Reads all created Vehicle records.
-     *
-     * @return: List of created Vehicle records
-     */
-    fun read(): List<Vehicle>
+    * Reads all created Vehicle records.
+    *
+    * @return: List of created VehicleResponse records
+    */
+    fun read(): List<VehicleResponse>
+
     /**
-     * Reads a Vehicle record by its index.
+    * Reads a Vehicle record by its id.
+    * The order is determined by the order of creation.
+    *
+    * @param id: The id of VehicleRequest record
+    * @return: The VehicleResponse instance at index
+    */
+    fun readById(id: Long): VehicleResponse
+
+    /**
+    * Updates a VehicleRequest record data.
+    *
+    * @param id: The id of the Vehicle instance to be updated
+    * @param vehicle: The VehicleRequest with new Vehicle values
+    * @return: The updated VehicleResponse record
+    */
+    fun updateById(id: Long, vehicle: VehicleRequest): VehicleResponse
+
+    /**
+     * Deletes a VehicleRequest record by its index.
      * The order is determined by the order of creation.
      *
-     * @param index: The index of Vehicle record
-     * @return: The Vehicle instance at index
+     * @param id: The id of Vehicle record to delete
+     * @return: The deleted VehicleResponse instance at index
      */
-    fun readByIndex(index: Int): Vehicle
-    /**
-     * Updates a Vehicle record data.
-     *
-     * @param vehicle: The Vehicle instance to be updated (valid id is required)
-     * @return: The updated Vehicle record
-     */
-    fun update(vehicle: Vehicle): Vehicle
-    /**
-     * Deletes a Vehicle record data.
-     *
-     * @param vehicle: The Vehicle instance to be deleted (valid `id` is required)
-     */
-    fun delete(vehicle: Vehicle)
-    /**
-     * Deletes a Vehicle record by its index.
-     * The order is determined by the order of creation.
-     *
-     * @param index: The index of Vehicle record to delete
-     * @return: The deleted Vehicle instance at index
-     */
-    fun deleteByIndex(index: Int): Vehicle
+    fun deleteById(id: Long): VehicleResponse
 }

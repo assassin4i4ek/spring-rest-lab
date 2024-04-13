@@ -2,47 +2,132 @@ package ua.kpi.its.lab.rest.svc.impl
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import ua.kpi.its.lab.rest.dto.BatteryResponse
+import ua.kpi.its.lab.rest.dto.VehicleRequest
+import ua.kpi.its.lab.rest.dto.VehicleResponse
+import ua.kpi.its.lab.rest.entity.Battery
 import ua.kpi.its.lab.rest.entity.Vehicle
 import ua.kpi.its.lab.rest.repo.VehicleRepository
 import ua.kpi.its.lab.rest.svc.VehicleService
+import java.math.BigDecimal
+import java.text.DateFormat
+import java.util.*
+import kotlin.jvm.optionals.getOrElse
+
 
 @Service
 class VehicleServiceImpl @Autowired constructor(
     private val repository: VehicleRepository
 ): VehicleService {
-    // Your code here
-    override fun create(vehicle: Vehicle): Vehicle {
-        if (repository.existsById(vehicle.id)) {
-            throw IllegalArgumentException("Vehicle with ID = ${vehicle.id} already exists")
+    override fun create(vehicle: VehicleRequest): VehicleResponse {
+        val battery = vehicle.battery
+        val newBattery = Battery(
+            model = battery.model,
+            manufacturer = battery.manufacturer,
+            type = battery.type,
+            capacity = battery.capacity,
+            manufactureDate = this.stringToDate(battery.manufactureDate),
+            chargeTime = battery.chargeTime,
+            isFastCharge = battery.isFastCharge
+        )
+        var newVehicle = Vehicle(
+            brand = vehicle.brand,
+            model = vehicle.model,
+            manufacturer = vehicle.manufacturer,
+            manufactureDate = this.stringToDate(vehicle.manufactureDate),
+            maxSpeed = vehicle.maxSpeed,
+            price = this.stringToPrice(vehicle.price),
+            isABS = vehicle.isABS,
+            battery = newBattery
+        )
+        newBattery.vehicle = newVehicle
+        newVehicle = this.repository.save(newVehicle)
+        val vehicleResponse = this.vehicleEntityToDto(newVehicle)
+        return vehicleResponse
+    }
+
+    override fun read(): List<VehicleResponse> {
+        return this.repository.findAll().map(this::vehicleEntityToDto)
+    }
+
+    override fun readById(id: Long): VehicleResponse {
+        val vehicle = this.getVehicleById(id)
+        val vehicleResponse = this.vehicleEntityToDto(vehicle)
+        return vehicleResponse
+    }
+
+    override fun updateById(id: Long, vehicle: VehicleRequest): VehicleResponse {
+        val oldVehicle = this.getVehicleById(id)
+        val battery = vehicle.battery
+
+        oldVehicle.apply {
+            brand = vehicle.brand
+            model = vehicle.model
+            manufacturer = vehicle.manufacturer
+            manufactureDate = this@VehicleServiceImpl.stringToDate(vehicle.manufactureDate)
+            maxSpeed = vehicle.maxSpeed
+            price = this@VehicleServiceImpl.stringToPrice(vehicle.price)
+            isABS = vehicle.isABS
         }
-        return repository.save(vehicle)
-    }
-
-    override fun read(): List<Vehicle> {
-        return repository.findAll()
-    }
-
-    override fun readByIndex(index: Int): Vehicle {
-        return this.read()[index]
-    }
-
-    override fun update(vehicle: Vehicle): Vehicle {
-        if (!repository.existsById(vehicle.id)) {
-            throw IllegalArgumentException("Vehicle with ID = ${vehicle.id} not found")
+        oldVehicle.battery.apply {
+            model = battery.model
+            manufacturer = battery.manufacturer
+            type = battery.type
+            capacity = battery.capacity
+            manufactureDate = this@VehicleServiceImpl.stringToDate(battery.manufactureDate)
+            chargeTime = battery.chargeTime
+            isFastCharge = battery.isFastCharge
         }
-        return repository.save(vehicle)
+        val newVehicle = this.repository.save(oldVehicle)
+        val vehicleResponse = this.vehicleEntityToDto(newVehicle)
+        return vehicleResponse
     }
 
-    override fun delete(vehicle: Vehicle) {
-        if (!repository.existsById(vehicle.id)) {
-            throw IllegalArgumentException("Vehicle with ID = ${vehicle.id} not found")
+    override fun deleteById(id: Long): VehicleResponse {
+        val vehicle = this.getVehicleById(id)
+        this.repository.delete(vehicle)
+        val vehicleResponse = vehicleEntityToDto(vehicle)
+        return vehicleResponse
+    }
+
+    private fun getVehicleById(id: Long): Vehicle {
+        return this.repository.findById(id).getOrElse {
+            throw IllegalArgumentException("Vehicle not found by id = $id")
         }
-        repository.deleteById(vehicle.id)
     }
 
-    override fun deleteByIndex(index: Int): Vehicle {
-        val target = this.readByIndex(index)
-        this.delete(target)
-        return target
+    private fun vehicleEntityToDto(vehicle: Vehicle): VehicleResponse {
+        return VehicleResponse(
+            id = vehicle.id,
+            brand = vehicle.brand,
+            model = vehicle.model,
+            manufacturer = vehicle.manufacturer,
+            manufactureDate = this.dateToString(vehicle.manufactureDate),
+            maxSpeed = vehicle.maxSpeed,
+            price = this.priceToString(vehicle.price),
+            isABS = vehicle.isABS,
+            battery = this.batteryEntityToDto(vehicle.battery)
+        )
     }
+
+    private fun batteryEntityToDto(battery: Battery): BatteryResponse {
+        return BatteryResponse(
+            id = battery.id,
+            model = battery.model,
+            manufacturer = battery.manufacturer,
+            type = battery.type,
+            capacity = battery.capacity,
+            manufactureDate = this.dateToString(battery.manufactureDate),
+            chargeTime = battery.chargeTime,
+            isFastCharge = battery.isFastCharge
+        )
+    }
+
+    private fun dateToString(date: Date): String = date.toString()
+
+    private fun stringToDate(date: String): Date = DateFormat.getDateInstance().parse(date)
+
+    private fun priceToString(price: BigDecimal): String = price.toString()
+
+    private fun stringToPrice(price: String): BigDecimal = BigDecimal(price)
 }
