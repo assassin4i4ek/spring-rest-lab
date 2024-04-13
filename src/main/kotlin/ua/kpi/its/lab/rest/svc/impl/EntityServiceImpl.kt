@@ -10,7 +10,9 @@ import ua.kpi.its.lab.rest.entity.Vehicle
 import ua.kpi.its.lab.rest.repo.VehicleRepository
 import ua.kpi.its.lab.rest.svc.VehicleService
 import java.math.BigDecimal
-import java.text.DateFormat
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
 
@@ -123,9 +125,17 @@ class VehicleServiceImpl @Autowired constructor(
         )
     }
 
-    private fun dateToString(date: Date): String = date.toString()
+    private fun dateToString(date: Date): String {
+        val instant = date.toInstant()
+        val dateTime = instant.atOffset(ZoneOffset.UTC).toLocalDateTime()
+        return dateTime.format(DateTimeFormatter.ISO_DATE_TIME)
+    }
 
-    private fun stringToDate(date: String): Date = DateFormat.getDateInstance().parse(date)
+    private fun stringToDate(date: String): Date {
+        val dateTime = LocalDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME)
+        val instant = dateTime.toInstant(ZoneOffset.UTC)
+        return Date.from(instant)
+    }
 
     private fun priceToString(price: BigDecimal): String = price.toString()
 
