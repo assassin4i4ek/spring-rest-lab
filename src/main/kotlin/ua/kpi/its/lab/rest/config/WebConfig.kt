@@ -1,6 +1,7 @@
 package ua.kpi.its.lab.rest.config
 
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.converter.HttpMessageConverter
@@ -8,9 +9,9 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-import org.springframework.web.servlet.function.RouterFunction
-import org.springframework.web.servlet.function.router
-import ua.kpi.its.lab.rest.dto.ExampleDto
+import org.springframework.web.servlet.function.*
+import ua.kpi.its.lab.rest.dto.VehicleRequest
+import ua.kpi.its.lab.rest.svc.VehicleService
 import java.text.SimpleDateFormat
 
 @Configuration
@@ -28,11 +29,38 @@ class WebConfig : WebMvcConfigurer {
     }
 
     @Bean
-    fun functionalRoutes(): RouterFunction<*> = router {
+    fun functionalRoutes(vehicleService: VehicleService): RouterFunction<*> = router {
+        fun wrapNotFoundError(call: () -> Any): ServerResponse {
+            return try {
+                val result = call()
+                ok().body(result)
+            }
+            catch (e: IllegalArgumentException) {
+                notFound().build()
+            }
+        }
+
         "/fn".nest {
-            "/example".nest {
+            "/vehicles".nest {
                 GET("") {
-                    ok().body(ExampleDto("example"))
+                    ok().body(vehicleService.read())
+                }
+                GET("/{id}") { req ->
+                    val id = req.pathVariable("id").toLong()
+                    wrapNotFoundError { vehicleService.readById(id) }
+                }
+                POST("") { req ->
+                    val vehicle = req.body<VehicleRequest>()
+                    ok().body(vehicleService.create(vehicle))
+                }
+                PUT("/{id}") { req ->
+                    val id = req.pathVariable("id").toLong()
+                    val vehicle = req.body<VehicleRequest>()
+                    wrapNotFoundError { vehicleService.updateById(id, vehicle) }
+                }
+                DELETE("/{id}") { req ->
+                    val id = req.pathVariable("id").toLong()
+                    wrapNotFoundError { vehicleService.deleteById(id)}
                 }
             }
 
