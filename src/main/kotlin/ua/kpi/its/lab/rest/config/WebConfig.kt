@@ -1,7 +1,6 @@
 package ua.kpi.its.lab.rest.config
 
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.converter.HttpMessageConverter
@@ -9,7 +8,10 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-import org.springframework.web.servlet.function.*
+import org.springframework.web.servlet.function.RouterFunction
+import org.springframework.web.servlet.function.ServerResponse
+import org.springframework.web.servlet.function.body
+import org.springframework.web.servlet.function.router
 import ua.kpi.its.lab.rest.dto.VehicleRequest
 import ua.kpi.its.lab.rest.svc.VehicleService
 import java.text.SimpleDateFormat
